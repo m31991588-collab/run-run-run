@@ -3,84 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Nebula Stars: Evolution</title>
+    <title>Nebula Stars: Ultra</title>
     <style>
         :root { 
-            --blue: #0081ff; --yellow: #ffca00; --red: #ff4646; 
-            --dark: #0b132b; --glass: rgba(255, 255, 255, 0.15);
+            --gold: #ffcc00; --gold-dark: #b38f00;
+            --blue-bright: #0081ff; --blue-dark: #0041aa;
+            --ui-bg: rgba(2, 12, 27, 0.8);
         }
         body { 
-            margin: 0; background: var(--dark); color: #fff; 
+            margin: 0; background: #01050a; color: white; 
             font-family: 'Arial Black', sans-serif; overflow: hidden; 
             display: flex; justify-content: center; align-items: center; height: 100vh;
-            touch-action: none;
         }
 
         #gameContainer { 
             position: relative; width: 850px; height: 480px; 
-            background: radial-gradient(circle, #1c2541 0%, #0b132b 100%);
-            border: 4px solid #3a506b; border-radius: 30px; overflow: hidden;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            background: linear-gradient(180deg, #1a3a6c 0%, #050e1f 100%);
+            border: 6px solid #2a4a7c; border-radius: 45px; overflow: hidden;
+            box-shadow: 0 0 100px rgba(0,0,0,0.9), inset 0 0 50px rgba(0,129,255,0.2);
         }
 
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* --- UI LAYERS --- */
+        /* --- BRAWL STYLE UI --- */
         .ui-layer { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
         .pointer { pointer-events: all; }
 
-        /* Lobby Top Bar */
-        .top-bar { 
-            position: absolute; top: 15px; width: 100%; padding: 0 25px; 
-            display: flex; justify-content: space-between; box-sizing: border-box; 
+        .top-nav { position: absolute; top: 20px; width: 100%; display: flex; justify-content: center; gap: 20px; }
+        .pill { 
+            background: var(--ui-bg); padding: 8px 25px; border-radius: 30px; 
+            border: 3px solid #fff; box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+            display: flex; align-items: center; gap: 10px; font-size: 1.1rem;
         }
-        .stat-box { 
-            background: rgba(0,0,0,0.6); padding: 8px 15px; border-radius: 20px; 
-            border: 2px solid var(--yellow); color: var(--yellow); display: flex; align-items: center; gap: 8px;
-        }
-
-        /* Lobby Buttons */
-        .side-menu { position: absolute; left: 20px; top: 100px; display: flex; flex-direction: column; gap: 15px; }
-        .icon-btn { 
-            width: 75px; height: 75px; background: var(--blue); border: 4px solid #fff; 
-            border-radius: 18px; box-shadow: 0 6px 0 #0056aa; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-size: 2.2rem;
-        }
-        .icon-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #0056aa; }
 
         .play-btn { 
-            position: absolute; right: 30px; bottom: 30px; 
-            width: 220px; height: 80px; background: var(--yellow); 
-            border: 5px solid #fff; border-radius: 20px; box-shadow: 0 8px 0 #b38f00;
-            color: #000; font-size: 2rem; cursor: pointer; display: flex; 
+            position: absolute; right: 40px; bottom: 40px; 
+            width: 250px; height: 90px; background: linear-gradient(180deg, var(--gold) 0%, var(--gold-dark) 100%); 
+            border: 6px solid #fff; border-radius: 30px; box-shadow: 0 12px 0 #664400;
+            color: #000; font-size: 2.5rem; cursor: pointer; display: flex; 
             align-items: center; justify-content: center; transform: rotate(-2deg);
+            text-shadow: 0 2px 0 rgba(255,255,255,0.5);
+        }
+        .play-btn:active { transform: rotate(-2deg) translateY(8px); box-shadow: 0 4px 0 #664400; }
+
+        .side-menu { position: absolute; left: 30px; top: 110px; display: flex; flex-direction: column; gap: 20px; }
+        .tile { 
+            width: 90px; height: 90px; background: linear-gradient(180deg, var(--blue-bright) 0%, var(--blue-dark) 100%);
+            border: 4px solid #fff; border-radius: 22px; box-shadow: 0 8px 0 #002d7a;
+            display: flex; align-items: center; justify-content: center; font-size: 2.8rem; cursor: pointer;
         }
 
-        /* Shop / Modals */
-        .modal { 
-            position: absolute; inset: 40px; background: rgba(11, 19, 43, 0.98); 
-            border: 4px solid var(--blue); border-radius: 25px; padding: 30px; 
-            display: flex; flex-direction: column; align-items: center; z-index: 100;
+        /* --- IN-GAME CONTROLS --- */
+        .game-controls { position: absolute; bottom: 30px; width: 100%; display: flex; justify-content: space-between; padding: 0 50px; box-sizing: border-box; }
+        .ctrl-btn { 
+            width: 100px; height: 100px; background: rgba(255,255,255,0.1); backdrop-filter: blur(15px);
+            border: 4px solid rgba(255,255,255,0.5); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 3rem; pointer-events: all;
+            box-shadow: 0 0 20px rgba(0,0,0,0.4);
         }
-        .skin-grid { display: flex; gap: 20px; margin-top: 20px; }
-        .skin-card { 
-            width: 140px; height: 180px; background: #1c2541; border: 3px solid #fff; 
-            border-radius: 20px; cursor: pointer; padding: 15px; text-align: center;
-        }
-        .skin-card.active { border-color: var(--yellow); background: #2c3e50; }
-
-        /* --- MOBILE CONTROLS (Glas-Optik) --- */
-        .mobile-controls { 
-            position: absolute; bottom: 30px; width: 100%; 
-            display: flex; justify-content: space-between; padding: 0 40px; box-sizing: border-box; 
-        }
-        .m-btn { 
-            width: 85px; height: 85px; background: var(--glass); backdrop-filter: blur(8px);
-            border: 3px solid rgba(255,255,255,0.3); border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-size: 2.5rem;
-            pointer-events: all; user-select: none;
-        }
-        .m-btn:active { background: rgba(255,255,255,0.4); transform: scale(0.9); }
 
         .hidden { display: none !important; }
     </style>
@@ -89,47 +69,24 @@
 
 <div id="gameContainer">
     <div id="lobbyUI" class="ui-layer pointer">
-        <div class="top-bar">
-            <div class="stat-box">💰 <span id="goldLobby">0</span></div>
-            <div class="stat-box" style="border-color: var(--blue);">⭐ LVL <span id="lvlLobby">1</span></div>
+        <div class="top-nav">
+            <div class="pill" style="color: var(--gold); border-color: var(--gold);">💰 <span id="goldText">0</span></div>
+            <div class="pill" style="color: #00ff88; border-color: #00ff88;">🏆 <span id="scoreText">0</span></div>
         </div>
         <div class="side-menu">
-            <div class="icon-btn" onclick="openModal('shopModal')">🛒</div>
-            <div class="icon-btn" style="background: #2ecc71; box-shadow: 0 6px 0 #27ae60;" onclick="openModal('skinModal')">👕</div>
+            <div class="tile">🛒</div>
+            <div class="tile" style="background: linear-gradient(180deg, #ff4646 0%, #aa0000 100%); border-color: #fff; box-shadow: 0 8px 0 #660000;">👕</div>
         </div>
-        <div class="play-btn" onclick="startGame()">SPIELEN</div>
-    </div>
-
-    <div id="shopModal" class="ui-layer hidden pointer">
-        <div class="modal">
-            <h2>SHOP</h2>
-            <div class="skin-grid">
-                <div class="skin-card" onclick="buySkin('Fire', 50)">
-                    <div style="font-size: 3.5rem;">🔥</div>
-                    <p>FIRE HERO</p>
-                    <button style="background:var(--yellow); border:none; border-radius:5px; padding:5px;">50 💰</button>
-                </div>
-                <div class="skin-card" onclick="buySkin('Neon', 150)">
-                    <div style="font-size: 3.5rem;">⚡</div>
-                    <p>NEON NINJA</p>
-                    <button style="background:var(--yellow); border:none; border-radius:5px; padding:5px;">150 💰</button>
-                </div>
-            </div>
-            <button class="icon-btn" style="margin-top:40px; width:150px; height:50px; font-size:1rem;" onclick="closeModals()">ZURÜCK</button>
-        </div>
+        <div class="play-btn" onclick="startGame()">LOS!</div>
     </div>
 
     <div id="gameUI" class="ui-layer hidden">
-        <div class="top-bar">
-            <div id="hpDisp" style="font-size: 2rem;">❤️❤️❤️</div>
-            <div id="goldGame">💰 0</div>
-        </div>
-        <div class="mobile-controls">
-            <div style="display: flex; gap: 20px;">
-                <div class="m-btn pointer" id="jumpBtn" style="background: rgba(0, 129, 255, 0.4);">↑</div>
-                <div class="m-btn pointer" id="duckBtn" style="background: rgba(255, 70, 70, 0.4);">↓</div>
+        <div class="game-controls">
+            <div style="display: flex; gap: 25px;">
+                <div class="ctrl-btn" id="btnJump">↑</div>
+                <div class="ctrl-btn" id="btnDuck" style="border-color: #ff4646; color: #ff4646;">↓</div>
             </div>
-            <div class="m-btn pointer" id="dashBtn" style="background: rgba(34, 211, 238, 0.4);">⚡</div>
+            <div class="ctrl-btn" id="btnDash" style="border-color: #00fbff; color: #00fbff;">⚡</div>
         </div>
     </div>
 
@@ -140,162 +97,141 @@
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
 
-    // --- GAME STATE ---
-    let state = {
-        gold: parseInt(localStorage.getItem("ns_gold")) || 0,
-        lvl: 1,
-        ownedSkins: ['Default'],
-        activeSkin: 'Default'
-    };
+    let game = { active: false, frame: 0, speed: 7, particles: [] };
+    let player = { x: 150, y: 310, w: 65, h: 95, vy: 0, jumps: 0, duck: false, dash: 0 };
+    let env = { platforms: [], enemies: [] };
 
-    let game = { active: false, frame: 0, speed: 6, bossMode: false };
-    let player = { x: 120, y: 330, w: 50, h: 75, vy: 0, jumps: 0, hp: 3, isDucking: false, isDashing: 0 };
-    let objects = { platforms: [], enemies: [], obstacles: [] };
-
-    // --- UI FUNCTIONS ---
-    function openModal(id) { document.getElementById(id).classList.remove("hidden"); }
-    function closeModals() { document.querySelectorAll('.ui-layer').forEach(l => { if(l.id !== 'lobbyUI' && l.id !== 'gameUI') l.classList.add("hidden"); }); }
-    
-    function buySkin(name, price) {
-        if(state.gold >= price && !state.ownedSkins.includes(name)) {
-            state.gold -= price;
-            state.ownedSkins.push(name);
-            state.activeSkin = name;
-            save(); alert("Gekauft & Ausgerüstet!");
-        } else if(state.ownedSkins.includes(name)) {
-            state.activeSkin = name;
-            alert("Skin gewechselt!");
-        } else { alert("Zu wenig Gold!"); }
-    }
-
-    function save() {
-        localStorage.setItem("ns_gold", state.gold);
-        document.getElementById("goldLobby").innerText = state.gold;
-        document.getElementById("lvlLobby").innerText = state.lvl;
-    }
-
-    // --- GAME ENGINE ---
-    function startGame() {
-        document.getElementById("lobbyUI").classList.add("hidden");
-        document.getElementById("gameUI").classList.remove("hidden");
-        game.active = true; game.frame = 0; game.bossMode = false;
-        player.hp = 3; player.y = 330;
-        objects.platforms = [{x: 0, y: 410, w: 1200, h: 100}];
-        objects.enemies = []; objects.obstacles = [];
-        loop();
-    }
-
-    function jump() { if(player.jumps < 2) { player.vy = -16; player.jumps++; player.isDucking = false; } }
-    function dash() { if(player.isDashing <= 0) player.isDashing = 15; }
-
-    // Steuerung (PC)
-    window.addEventListener("keydown", (e) => {
-        if(e.code === "Space") jump();
-        if(e.code === "ArrowDown") player.isDucking = true;
-        if(e.code === "ShiftLeft") dash();
-    });
-    window.addEventListener("keyup", (e) => { if(e.code === "ArrowDown") player.isDucking = false; });
-
-    // Steuerung (Mobile Buttons)
-    document.getElementById("jumpBtn").addEventListener("touchstart", (e) => { e.preventDefault(); jump(); });
-    document.getElementById("duckBtn").addEventListener("touchstart", (e) => { e.preventDefault(); player.isDucking = true; });
-    document.getElementById("duckBtn").addEventListener("touchend", (e) => { e.preventDefault(); player.isDucking = false; });
-    document.getElementById("dashBtn").addEventListener("touchstart", (e) => { e.preventDefault(); dash(); });
-
-    function drawHero(x, y) {
+    function drawHero(x, y, isLobby) {
         ctx.save();
-        let h = player.isDucking ? 45 : 75;
-        let py = player.isDucking ? y + 30 : y;
-        
-        // Shadow
-        ctx.fillStyle = "rgba(0,0,0,0.2)";
-        ctx.beginPath(); ctx.ellipse(x+25, 410, 20, 5, 0, 0, Math.PI*2); ctx.fill();
+        let breathe = isLobby ? Math.sin(Date.now() * 0.003) * 6 : 0;
+        let py = player.duck ? y + 40 : y - breathe;
+        let ph = player.duck ? 55 : 95;
 
-        // Skin Colors
-        ctx.fillStyle = state.activeSkin === 'Fire' ? "#e67e22" : (state.activeSkin === 'Neon' ? "#00fbff" : "#3498db");
-        ctx.beginPath(); ctx.roundRect(x, py, 50, h, 12); ctx.fill();
+        // Shadow
+        ctx.fillStyle = "rgba(0,0,0,0.4)";
+        ctx.beginPath(); ctx.ellipse(x+32, 415, 30, 8, 0, 0, Math.PI*2); ctx.fill();
+
+        // Body Outline
+        ctx.strokeStyle = "#001a33"; ctx.lineWidth = 8;
+        ctx.beginPath(); ctx.roundRect(x-2, py-2, 69, ph+4, 18); ctx.stroke();
+
+        // Main Body (Gradient)
+        let grad = ctx.createLinearGradient(x, py, x, py+ph);
+        grad.addColorStop(0, "#00a2ff"); grad.addColorStop(1, "#0051ff");
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.roundRect(x, py, 65, ph, 16); ctx.fill();
+
+        // Vest/Detail
+        ctx.fillStyle = "rgba(255,255,255,0.15)";
+        ctx.fillRect(x+10, py+40, 45, 20);
+
+        // Face
+        ctx.fillStyle = "#ffdbac";
+        ctx.beginPath(); ctx.roundRect(x+5, py-5, 55, 50, 18); ctx.fill();
         
-        // Eyes
+        // Eyes (High Detail)
         ctx.fillStyle = "#fff";
-        ctx.beginPath(); ctx.arc(x+15, py+20, 6, 0, Math.PI*2); ctx.arc(x+35, py+20, 6, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(x+20, py+15, 9, 0, Math.PI*2); ctx.arc(x+45, py+15, 9, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = "#000";
-        ctx.beginPath(); ctx.arc(x+17, py+20, 2.5, 0, Math.PI*2); ctx.arc(x+33, py+20, 2.5, 0, Math.PI*2); ctx.fill();
-        
-        if(player.isDashing > 0) {
-            ctx.strokeStyle = "#00fbff"; ctx.lineWidth = 4; ctx.strokeRect(x-5, py-5, 60, h+10);
-        }
+        ctx.beginPath(); ctx.arc(x+23, py+15, 4, 0, Math.PI*2); ctx.arc(x+42, py+15, 4, 0, Math.PI*2); ctx.fill();
+
+        // Shine Effect
+        ctx.fillStyle = "rgba(255,255,255,0.3)";
+        ctx.beginPath(); ctx.roundRect(x+5, py+5, 15, 5, 5); ctx.fill();
+
         ctx.restore();
     }
 
+    function drawPlatform(p) {
+        // 3D Side
+        ctx.fillStyle = "#1a3a6c";
+        ctx.fillRect(p.x, p.y + 15, p.w, p.h);
+        // Top Surface
+        let grad = ctx.createLinearGradient(p.x, p.y, p.x, p.y+20);
+        grad.addColorStop(0, "#4a90ff"); grad.addColorStop(1, "#2a4a7c");
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.roundRect(p.x, p.y, p.w, 20, 5); ctx.fill();
+        // Highlight Edge
+        ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 2;
+        ctx.strokeRect(p.x+2, p.y+2, p.w-4, 2);
+    }
+
+    function startGame() {
+        document.getElementById("lobbyUI").classList.add("hidden");
+        document.getElementById("gameUI").classList.remove("hidden");
+        game.active = true; game.frame = 0;
+        env.platforms = [{x: 0, y: 410, w: 2000, h: 200}];
+        env.enemies = [];
+        loop();
+    }
+
+    // --- CONTROLS ---
+    const doJump = () => { if(player.jumps < 2) { player.vy = -19; player.jumps++; } };
+    document.getElementById("btnJump").ontouchstart = (e) => { e.preventDefault(); doJump(); };
+    document.getElementById("btnDuck").ontouchstart = (e) => { e.preventDefault(); player.duck = true; };
+    document.getElementById("btnDuck").ontouchend = (e) => { e.preventDefault(); player.duck = false; };
+    document.getElementById("btnDash").ontouchstart = (e) => { e.preventDefault(); if(player.dash <= 0) player.dash = 18; };
+
+    window.onkeydown = (e) => { 
+        if(e.code === "Space") doJump(); 
+        if(e.code === "ArrowDown") player.duck = true;
+    };
+    window.onkeyup = (e) => { if(e.code === "ArrowDown") player.duck = false; };
+
     function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
         if(!game.active) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawHero(400, 200); // Preview in Lobby
+            drawHero(400, 230, true);
             requestAnimationFrame(loop);
             return;
         }
 
         game.frame++;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let speed = player.dash > 0 ? 20 : game.speed;
+        
+        // Physics
+        if(player.dash > 0) { player.dash--; player.vy = 0; }
+        else { player.vy += 0.95; player.y += player.vy; }
 
-        // Scroll & Speed
-        let speed = player.isDashing > 0 ? 16 : game.speed;
-        if(player.isDashing > 0) { player.isDashing--; player.vy = 0; }
-        else { player.vy += 0.8; player.y += player.vy; }
+        if(player.y > 315) { 
+            player.y = 315; player.vy = 0; player.jumps = 0; 
+            if(game.frame % 5 === 0) game.particles.push({x: player.x, y: 410, r: 5, a: 1}); // Dust
+        }
 
-        // Plattformen & Löcher
-        objects.platforms.forEach((p, i) => {
+        // Platforms
+        env.platforms.forEach(p => {
             p.x -= speed;
-            ctx.fillStyle = "#34495e"; ctx.beginPath(); ctx.roundRect(p.x, p.y, p.w, p.h, 10); ctx.fill();
-            if(player.x < p.x + p.w && player.x + 50 > p.x && player.y + 75 > p.y && player.y + 65 < p.y) {
-                player.y = p.y - 75; player.vy = 0; player.jumps = 0;
+            drawPlatform(p);
+        });
+
+        // Enemies (Brawl Style Spikes)
+        if(game.frame % 80 === 0) env.enemies.push({x: 900, y: 370});
+        env.enemies.forEach((en, i) => {
+            en.x -= speed;
+            ctx.fillStyle = "#ff4646";
+            ctx.beginPath(); ctx.moveTo(en.x, en.y+40); ctx.lineTo(en.x+20, en.y); ctx.lineTo(en.x+40, en.y+40); ctx.fill();
+            ctx.strokeStyle = "#fff"; ctx.stroke();
+            if(Math.abs(player.x - en.x) < 45 && Math.abs(player.y - en.y) < 45) {
+                if(player.dash > 0) env.enemies.splice(i, 1);
+                else { game.active = false; location.reload(); }
             }
         });
 
-        // Spawn Logic
-        if(game.frame % 100 === 0) {
-            let type = Math.random();
-            if(type > 0.4) objects.platforms.push({x: 900, y: Math.random() > 0.5 ? 410 : 280, w: 300, h: 40});
-            if(type < 0.3) objects.enemies.push({x: 900, y: 370, vx: -4 - Math.random()*4});
-            if(type < 0.2) objects.obstacles.push({x: 900, y: 310, w: 80, h: 15}); // Duck-Hindernis
-        }
-
-        // Hindernisse (Ducken erforderlich)
-        objects.obstacles.forEach((ob, i) => {
-            ob.x -= speed;
-            ctx.fillStyle = "#95a5a6"; ctx.fillRect(ob.x, ob.y, ob.w, ob.h);
-            if(player.x < ob.x + ob.w && player.x + 50 > ob.x && player.y < ob.y + ob.h && player.y + 75 > ob.y) {
-                if(!player.isDucking) { player.hp--; objects.obstacles.splice(i, 1); }
-            }
+        // VFX Particles
+        game.particles.forEach((p, i) => {
+            p.x -= speed; p.a -= 0.05;
+            ctx.fillStyle = `rgba(255,255,255,${p.a})`;
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+            if(p.a <= 0) game.particles.splice(i, 1);
         });
 
-        // Gegner (Bewegen sich)
-        objects.enemies.forEach((en, i) => {
-            en.x += (en.vx - speed/2);
-            ctx.fillStyle = "#ff4646"; ctx.beginPath(); ctx.moveTo(en.x, en.y+40); ctx.lineTo(en.x+20, en.y); ctx.lineTo(en.x+40, en.y+40); ctx.fill();
-            if(Math.abs(player.x - en.x) < 40 && Math.abs(player.y - en.y) < 40) {
-                if(player.isDashing > 0) { enemies.splice(i, 1); state.gold += 10; }
-                else { player.hp--; objects.enemies.splice(i, 1); }
-            }
-        });
-
-        drawHero(player.x, player.y);
-
-        // UI Update
-        document.getElementById("hpDisp").innerText = "❤️".repeat(player.hp);
-        document.getElementById("goldGame").innerText = "💰 " + Math.floor(game.frame/10);
-
-        if(player.y > canvas.height || player.hp <= 0) {
-            state.gold += Math.floor(game.frame/10);
-            game.active = false; save();
-            document.getElementById("gameUI").classList.add("hidden");
-            document.getElementById("lobbyUI").classList.remove("hidden");
-        }
-
+        drawHero(player.x, player.y, false);
+        document.getElementById("goldText").innerText = Math.floor(game.frame/5);
+        document.getElementById("scoreText").innerText = Math.floor(game.frame/20);
+        
         requestAnimationFrame(loop);
     }
-
-    save();
     loop();
 </script>
 </body>
