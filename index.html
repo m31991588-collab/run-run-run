@@ -2,200 +2,230 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Nebula World - Dash & Boots</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>Nebula Stars</title>
     <style>
-        :root { --p: #6366f1; --s: #10b981; --dark: #020617; --gold: #fbbf24; --dash: #22d3ee; }
-        body { margin: 0; background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; touch-action: none; }
-        #gameContainer { position: relative; width: 800px; height: 450px; border-radius: 20px; overflow: hidden; box-shadow: 0 0 60px rgba(0,0,0,0.9); border: 2px solid #1e293b; }
-        canvas { display: block; background: linear-gradient(to bottom, #020617, #1e1b4b); }
+        :root { 
+            --blue: #0081ff; --yellow: #ffca00; --red: #ff4646; 
+            --green: #2ecc71; --dark: #0b132b; --white: #ffffff;
+        }
+        body { 
+            margin: 0; background: var(--dark); color: var(--white); 
+            font-family: 'Arial Black', sans-serif; overflow: hidden; 
+            display: flex; justify-content: center; align-items: center; height: 100vh;
+            touch-action: none;
+        }
 
-        .hud { position: absolute; top: 15px; width: 100%; padding: 0 25px; box-sizing: border-box; display: flex; justify-content: space-between; pointer-events: none; z-index: 10; }
-        
-        /* Stamina Bar für Dash */
-        .stamina-container { position: absolute; top: 50px; left: 25px; width: 120px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
-        #staminaFill { height: 100%; background: var(--dash); width: 100%; transition: 0.1s; }
+        #gameContainer { 
+            position: relative; width: 850px; height: 480px; 
+            background: radial-gradient(circle, #1c2541 0%, #0b132b 100%);
+            border: 4px solid #3a506b; border-radius: 30px; overflow: hidden;
+        }
 
-        .overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; }
-        .btn { padding: 12px 25px; background: var(--p); border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; margin: 5px; }
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* --- BRAWL STYLE UI --- */
+        .ui-layer { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
+        .pointer { pointer-events: all; }
+
+        /* Seiten-Buttons (Shop, Skins) */
+        .side-bar { position: absolute; left: 20px; top: 80px; display: flex; flex-direction: column; gap: 15px; }
+        .tile-btn { 
+            width: 80px; height: 80px; background: var(--blue); border: 4px solid #fff; 
+            border-radius: 15px; box-shadow: 0 5px 0 #0056aa; display: flex; 
+            align-items: center; justify-content: center; font-size: 2rem; cursor: pointer;
+        }
+        .tile-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #0056aa; }
+
+        /* Profil / Gold oben */
+        .top-bar { position: absolute; top: 15px; width: 100%; padding: 0 25px; display: flex; justify-content: space-between; box-sizing: border-box; }
+        .currency-box { background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; border: 2px solid var(--yellow); color: var(--yellow); display: flex; align-items: center; gap: 10px; }
+
+        /* Haupt-Button UNTEN RECHTS */
+        .play-btn { 
+            position: absolute; right: 30px; bottom: 30px; 
+            width: 220px; height: 80px; background: var(--yellow); 
+            border: 5px solid #fff; border-radius: 20px; box-shadow: 0 8px 0 #b38f00;
+            color: #000; font-size: 2rem; display: flex; align-items: center; 
+            justify-content: center; cursor: pointer; transform: rotate(-2deg);
+        }
+        .play-btn:active { transform: rotate(-2deg) translateY(5px); box-shadow: 0 3px 0 #b38f00; }
+
+        /* Mobile Controls */
+        .mobile-zone { position: absolute; inset: 0; display: flex; z-index: 5; }
+        .m-jump { flex: 1; } .m-dash { flex: 1; }
+
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="gameContainer">
-        <div class="hud hidden" id="gameHud">
-            <div>💰 <span id="goldDisp">0</span></div>
-            <div style="color: var(--gold);">LEVEL <span id="lvlDisp">1</span></div>
-            <div id="hpDisp">❤️❤️❤️</div>
+<div id="gameContainer">
+    <div id="lobbyUI" class="ui-layer pointer">
+        <div class="top-bar">
+            <div class="currency-box">💰 <span id="goldCount">0</span></div>
+            <div class="currency-box" style="border-color: var(--blue);">⭐ LVL <span id="lvlCount">1</span></div>
         </div>
-        <div class="stamina-container hidden" id="staminaBar"><div id="staminaFill"></div></div>
 
-        <canvas id="canvas" width="800" height="450"></canvas>
+        <div class="side-bar">
+            <div class="tile-btn pointer" onclick="alert('Shop öffnet...')">🛒</div>
+            <div class="tile-btn pointer" style="background: var(--green);" onclick="alert('Skin auswählen')">👕</div>
+        </div>
 
-        <div id="menu" class="overlay">
-            <h1 id="mTitle">NEBULA WORLD</h1>
-            <p id="mSub">Nutze SPACE zum Springen & SHIFT zum Dashen!</p>
-            <div id="shop" style="margin-bottom: 20px;">
-                <button class="btn" style="background: var(--dash);" onclick="buyAbility('dash')">DASH KAUFEN (50 💰)</button>
-                <button class="btn" style="background: var(--gold); color: black;" onclick="buyAbility('boots')">BOOTS KAUFEN (100 💰)</button>
-            </div>
-            <button class="btn" onclick="startLevel()">LEVEL STARTEN</button>
+        <div class="play-btn pointer" onclick="startGame()">SPIELEN</div>
+    </div>
+
+    <div id="gameUI" class="ui-layer hidden">
+        <div class="top-bar">
+            <div id="gameHP" style="font-size: 2rem; filter: drop-shadow(0 0 5px #000);">❤️❤️❤️</div>
+            <div id="gameProg" style="color: var(--white);">0%</div>
+        </div>
+        <div class="mobile-zone pointer">
+            <div class="m-jump" id="touchJump"></div>
+            <div class="m-dash" id="touchDash"></div>
         </div>
     </div>
 
-    <script>
-        const canvas = document.getElementById("canvas");
-        const ctx = canvas.getContext("2d");
+    <canvas id="canvas" width="850" height="480"></canvas>
+</div>
 
-        let state = { 
-            gold: 0, 
-            lvl: 1, 
-            hasDash: false, 
-            hasBoots: false 
-        };
+<script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
 
-        let game = { active: false, dist: 0, frame: 0, speed: 5 };
-        let player = { 
-            x: 100, y: 300, w: 40, h: 50, vy: 0, 
-            jumps: 0, maxJumps: 1, hp: 3, 
-            dashCooldown: 0, isDashing: 0, stamina: 100 
-        };
+    let state = { gold: parseInt(localStorage.getItem("nb_gold")) || 0, lvl: 1 };
+    let game = { active: false, frame: 0, distance: 0, speed: 6 };
+    let player = { x: 150, y: 320, w: 50, h: 70, vy: 0, jumps: 0, isDashing: 0 };
+    let enemies = [], platforms = [];
 
-        let platforms = [], enemies = [], particles = [];
+    // --- CHARACTER DESIGN (BRAWL STYLE) ---
+    function drawHero(x, y, isLobby) {
+        ctx.save();
+        ctx.translate(x, y);
 
-        function buyAbility(type) {
-            if(type === 'dash' && state.gold >= 50) { state.gold -= 50; state.hasDash = true; alert("Dash freigeschaltet! Nutze SHIFT."); }
-            if(type === 'boots' && state.gold >= 100) { state.gold -= 100; state.hasBoots = true; player.maxJumps = 2; alert("Doppelsprung aktiv!"); }
-            updateHUD();
+        if(!isLobby) { // Animation beim Laufen
+            let walk = Math.sin(game.frame * 0.15) * 5;
+            ctx.translate(0, walk);
+        } else { // Atmen in der Lobby
+            let breathe = Math.sin(Date.now() * 0.003) * 3;
+            ctx.scale(1, 1 + breathe/100);
         }
 
-        function startLevel() {
-            document.getElementById("menu").classList.add("hidden");
-            document.getElementById("gameHud").classList.remove("hidden");
-            document.getElementById("staminaBar").classList.remove("hidden");
-            game.active = true;
-            game.dist = 0;
-            player.hp = 3;
-            player.stamina = 100;
-            platforms = [{x: 0, y: 350, w: 1000, h: 100}];
-            enemies = [];
-            loop();
-        }
+        // Körper (Blaues Shirt)
+        ctx.fillStyle = "#3498db";
+        ctx.beginPath(); ctx.roundRect(0, 20, 50, 40, 10); ctx.fill();
+        
+        // Kopf
+        ctx.fillStyle = "#ffdbac";
+        ctx.beginPath(); ctx.roundRect(5, -10, 40, 35, 12); ctx.fill();
+        
+        // Haare / Mütze
+        ctx.fillStyle = "#2c3e50";
+        ctx.beginPath(); ctx.roundRect(5, -12, 40, 15, [10, 10, 0, 0]); ctx.fill();
 
-        function handleDash() {
-            if(!state.hasDash || player.stamina < 30 || player.dashCooldown > 0) return;
-            player.isDashing = 15; // Dash dauert 15 Frames
-            player.dashCooldown = 40;
-            player.stamina -= 35;
-            spawnParticles(player.x, player.y, "#22d3ee");
-        }
+        // Augen (Groß & Ausdrucksstark)
+        ctx.fillStyle = "#fff";
+        ctx.beginPath(); ctx.arc(15, 5, 6, 0, Math.PI*2); ctx.arc(35, 5, 6, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#000";
+        ctx.beginPath(); ctx.arc(17, 5, 2.5, 0, Math.PI*2); ctx.arc(33, 5, 2.5, 0, Math.PI*2); ctx.fill();
 
-        function spawnParticles(x, y, color) {
-            for(let i=0; i<8; i++) {
-                particles.push({x, y, vx: Math.random()*4-2, vy: Math.random()*4-2, life: 1, color});
-            }
-        }
-
-        function loop() {
-            if(!game.active) return;
-            game.frame++;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Stamina Regeneration
-            if(player.stamina < 100) player.stamina += 0.5;
-            if(player.dashCooldown > 0) player.dashCooldown--;
-            document.getElementById("staminaFill").style.width = player.stamina + "%";
-
-            // PHYSIK & DASH
-            let currentSpeed = game.speed;
-            if(player.isDashing > 0) {
-                player.isDashing--;
-                player.vy = 0; // Schweben beim Dashen
-                currentSpeed = 15; // Dreifache Geschwindigkeit
-            } else {
-                player.vy += 0.8;
-                player.y += player.vy;
-            }
-            game.dist += currentSpeed;
-
-            // PLATTFORMEN
-            platforms.forEach((plat, i) => {
-                plat.x -= currentSpeed;
-                ctx.fillStyle = "#1e293b";
-                ctx.beginPath(); ctx.roundRect(plat.x, plat.y, plat.w, plat.h, 5); ctx.fill();
-                
-                // Kollision
-                if(player.x < plat.x + plat.w && player.x + 40 > plat.x && 
-                   player.y + 50 > plat.y && player.y + 40 < plat.y && player.vy >= 0) {
-                    player.y = plat.y - 50;
-                    player.vy = 0;
-                    player.jumps = 0;
-                }
-            });
-
-            // GENERIERUNG
-            if(game.frame % 100 === 0) {
-                platforms.push({x: 850, y: 200 + Math.random()*150, w: 200, h: 20});
-                if(Math.random() > 0.5) enemies.push({x: 850, y: 310});
-            }
-
-            // SPIELER ZEICHNEN
-            ctx.fillStyle = player.isDashing > 0 ? "#22d3ee" : "#6366f1";
-            ctx.beginPath(); ctx.roundRect(player.x, player.y, 40, 50, 8); ctx.fill();
-
-            // GEGNER
-            enemies.forEach((en, i) => {
-                en.x -= currentSpeed;
-                ctx.fillStyle = "#ef4444";
-                ctx.beginPath(); ctx.moveTo(en.x, en.y+40); ctx.lineTo(en.x+20, en.y); ctx.lineTo(en.x+40, en.y+40); ctx.fill();
-                
-                if(Math.abs(player.x - en.x) < 30 && Math.abs(player.y - en.y) < 30) {
-                    if(player.isDashing > 0) { // Gegner mit Dash zerstören!
-                        enemies.splice(i, 1);
-                        state.gold += 20;
-                        spawnParticles(en.x, en.y, "#ef4444");
-                    } else {
-                        player.hp--; enemies.splice(i, 1);
-                        if(player.hp <= 0) stopGame("GAME OVER");
-                    }
-                }
-            });
-
-            // PARTIKEL
-            particles.forEach((p, i) => {
-                p.x -= 2; p.life -= 0.02;
-                ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
-                ctx.fillRect(p.x, p.y, 4, 4);
-                if(p.life <= 0) particles.splice(i, 1);
-            });
+        // Dash-Effekt
+        if(player.isDashing > 0) {
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = "#00fbff";
+            ctx.fillRect(-20, 20, 20, 40);
             ctx.globalAlpha = 1;
+        }
 
-            if(player.y > canvas.height) stopGame("ABGESTÜRZT");
-            updateHUD();
+        ctx.restore();
+    }
+
+    function drawEnemy(x, y) {
+        ctx.fillStyle = "#e74c3c";
+        // Kleines Monster mit Stacheln
+        ctx.beginPath(); ctx.moveTo(x, y+40); ctx.lineTo(x+20, y); ctx.lineTo(x+40, y+40); ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x+20, y+25, 5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(x+20, y+25, 2, 0, Math.PI*2); ctx.fill();
+    }
+
+    function startGame() {
+        document.getElementById("lobbyUI").classList.add("hidden");
+        document.getElementById("gameUI").classList.remove("hidden");
+        game.active = true;
+        game.distance = 0;
+        player.hp = 3;
+        enemies = [];
+        platforms = [{x: 0, y: 400, w: 2000, h: 100}];
+        loop();
+    }
+
+    function stopGame() {
+        game.active = false;
+        document.getElementById("gameUI").classList.add("hidden");
+        document.getElementById("lobbyUI").classList.remove("hidden");
+        localStorage.setItem("nb_gold", state.gold);
+    }
+
+    // --- STEUERUNG ---
+    function jump() { if(player.jumps < 2) { player.vy = -16; player.jumps++; } }
+    function dash() { if(player.isDashing <= 0) player.isDashing = 15; }
+
+    window.addEventListener("keydown", (e) => {
+        if(e.code === "Space") jump();
+        if(e.code === "ShiftLeft") dash();
+    });
+
+    document.getElementById("touchJump").addEventListener("touchstart", (e) => { jump(); e.preventDefault(); });
+    document.getElementById("touchDash").addEventListener("touchstart", (e) => { dash(); e.preventDefault(); });
+
+    function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if(!game.active) {
+            // Lobby Hintergrund & Charakter-Vorschau
+            drawHero(400, 200, true);
             requestAnimationFrame(loop);
+            return;
         }
 
-        function updateHUD() {
-            document.getElementById("goldDisp").innerText = state.gold;
-            document.getElementById("lvlDisp").innerText = state.lvl;
-            document.getElementById("hpDisp").innerText = "❤️".repeat(player.hp);
-        }
+        game.frame++;
+        game.distance += game.speed;
 
-        function stopGame(t) {
-            game.active = false;
-            document.getElementById("mTitle").innerText = t;
-            document.getElementById("menu").classList.remove("hidden");
-        }
+        // Physik
+        let currentSpeed = player.isDashing > 0 ? 15 : game.speed;
+        if(player.isDashing > 0) { player.isDashing--; player.vy = 0; }
+        else { player.vy += 0.8; player.y += player.vy; }
 
-        window.addEventListener("keydown", (e) => {
-            if(e.code === "Space" && player.jumps < player.maxJumps) {
-                player.vy = -14; player.jumps++;
-            }
-            if(e.code === "ShiftLeft" || e.code === "ShiftRight") {
-                handleDash();
+        if(player.y > 330) { player.y = 330; player.vy = 0; player.jumps = 0; }
+
+        // Plattformen
+        platforms.forEach(p => {
+            p.x -= currentSpeed;
+            ctx.fillStyle = "#34495e";
+            ctx.beginPath(); ctx.roundRect(p.x, p.y, p.w, p.h, 10); ctx.fill();
+        });
+
+        // Gegner Spawning
+        if(game.frame % 120 === 0) enemies.push({x: 900, y: 360});
+        enemies.forEach((en, i) => {
+            en.x -= currentSpeed;
+            drawEnemy(en.x, en.y);
+            if(Math.abs(player.x - en.x) < 40 && Math.abs(player.y - en.y) < 40) {
+                if(player.isDashing > 0) { enemies.splice(i, 1); state.gold += 10; }
+                else { player.hp--; enemies.splice(i, 1); if(player.hp <= 0) stopGame(); }
             }
         });
-    </script>
+
+        drawHero(player.x, player.y, false);
+        
+        document.getElementById("goldCount").innerText = state.gold;
+        document.getElementById("gameHP").innerText = "❤️".repeat(player.hp);
+        
+        requestAnimationFrame(loop);
+    }
+
+    // Initialer Loop Start
+    loop();
+</script>
 </body>
 </html>
