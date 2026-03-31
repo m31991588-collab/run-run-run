@@ -3,64 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Nebula Stars: Ultra</title>
+    <title>Nebula Stars: Ultra Map Update</title>
     <style>
         :root { 
-            --gold: #ffcc00; --gold-dark: #b38f00;
-            --blue-bright: #0081ff; --blue-dark: #0041aa;
-            --ui-bg: rgba(2, 12, 27, 0.8);
+            --gold: #ffcc00; --gold-dark: #cc9900;
+            --blue-main: #0081ff; --blue-dark: #0056b3;
+            --ui-bg: rgba(10, 20, 40, 0.85);
         }
         body { 
             margin: 0; background: #01050a; color: white; 
             font-family: 'Arial Black', sans-serif; overflow: hidden; 
             display: flex; justify-content: center; align-items: center; height: 100vh;
+            touch-action: none;
         }
 
         #gameContainer { 
             position: relative; width: 850px; height: 480px; 
-            background: linear-gradient(180deg, #1a3a6c 0%, #050e1f 100%);
-            border: 6px solid #2a4a7c; border-radius: 45px; overflow: hidden;
-            box-shadow: 0 0 100px rgba(0,0,0,0.9), inset 0 0 50px rgba(0,129,255,0.2);
+            background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%); /* Himmel Blau */
+            border: 6px solid #1a3a6c; border-radius: 40px; overflow: hidden;
+            box-shadow: 0 0 60px rgba(0,0,0,0.8);
+            transition: background 2s ease;
         }
 
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* --- BRAWL STYLE UI --- */
+        /* UI LAYERS */
         .ui-layer { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
         .pointer { pointer-events: all; }
 
-        .top-nav { position: absolute; top: 20px; width: 100%; display: flex; justify-content: center; gap: 20px; }
+        .top-nav { position: absolute; top: 15px; width: 100%; display: flex; justify-content: center; gap: 20px; }
         .pill { 
             background: var(--ui-bg); padding: 8px 25px; border-radius: 30px; 
-            border: 3px solid #fff; box-shadow: 0 4px 0 rgba(0,0,0,0.3);
-            display: flex; align-items: center; gap: 10px; font-size: 1.1rem;
+            border: 3px solid #fff; box-shadow: 0 4px 0 rgba(0,0,0,0.4);
+            display: flex; align-items: center; gap: 10px; font-size: 1.2rem;
         }
 
+        /* Buttons & Menüs */
         .play-btn { 
             position: absolute; right: 40px; bottom: 40px; 
-            width: 250px; height: 90px; background: linear-gradient(180deg, var(--gold) 0%, var(--gold-dark) 100%); 
-            border: 6px solid #fff; border-radius: 30px; box-shadow: 0 12px 0 #664400;
-            color: #000; font-size: 2.5rem; cursor: pointer; display: flex; 
+            width: 260px; height: 95px; background: linear-gradient(180deg, var(--gold) 0%, var(--gold-dark) 100%); 
+            border: 6px solid #fff; border-radius: 30px; box-shadow: 0 12px 0 #997300;
+            color: #000; font-size: 2.8rem; cursor: pointer; display: flex; 
             align-items: center; justify-content: center; transform: rotate(-2deg);
-            text-shadow: 0 2px 0 rgba(255,255,255,0.5);
+            text-shadow: 0 2px 0 rgba(255,255,255,0.6);
         }
-        .play-btn:active { transform: rotate(-2deg) translateY(8px); box-shadow: 0 4px 0 #664400; }
+        .play-btn:active { transform: rotate(-2deg) translateY(8px); box-shadow: 0 4px 0 #997300; }
 
-        .side-menu { position: absolute; left: 30px; top: 110px; display: flex; flex-direction: column; gap: 20px; }
+        .side-menu { position: absolute; left: 30px; top: 100px; display: flex; flex-direction: column; gap: 20px; }
         .tile { 
-            width: 90px; height: 90px; background: linear-gradient(180deg, var(--blue-bright) 0%, var(--blue-dark) 100%);
-            border: 4px solid #fff; border-radius: 22px; box-shadow: 0 8px 0 #002d7a;
-            display: flex; align-items: center; justify-content: center; font-size: 2.8rem; cursor: pointer;
+            width: 85px; height: 85px; background: linear-gradient(180deg, var(--blue-main) 0%, var(--blue-dark) 100%);
+            border: 4px solid #fff; border-radius: 22px; box-shadow: 0 8px 0 #003d80;
+            display: flex; align-items: center; justify-content: center; font-size: 2.5rem; cursor: pointer;
         }
+        .tile:active { transform: translateY(4px); box-shadow: 0 4px 0 #003d80; }
 
-        /* --- IN-GAME CONTROLS --- */
+        /* SHOP MODAL */
+        .modal { 
+            position: absolute; inset: 40px; background: rgba(10, 20, 40, 0.95); 
+            border: 5px solid var(--blue-main); border-radius: 30px; padding: 20px; 
+            display: flex; flex-direction: column; align-items: center; z-index: 100;
+        }
+        .skin-grid { display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; justify-content: center; }
+        .skin-card { 
+            width: 130px; height: 160px; background: #1a3a6c; border: 4px solid #fff; 
+            border-radius: 20px; cursor: pointer; padding: 10px; text-align: center;
+            display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+        }
+        .skin-card.owned { border-color: var(--gold); }
+        .skin-card.active { background: #0056b3; border-color: #00ff88; box-shadow: 0 0 20px rgba(0,255,136,0.5); }
+        .buy-btn { background: var(--gold); border: none; padding: 5px 10px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; }
+
+        /* IN-GAME CONTROLS */
         .game-controls { position: absolute; bottom: 30px; width: 100%; display: flex; justify-content: space-between; padding: 0 50px; box-sizing: border-box; }
         .ctrl-btn { 
-            width: 100px; height: 100px; background: rgba(255,255,255,0.1); backdrop-filter: blur(15px);
-            border: 4px solid rgba(255,255,255,0.5); border-radius: 50%;
+            width: 90px; height: 90px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
+            border: 4px solid rgba(255,255,255,0.6); border-radius: 50%;
             display: flex; align-items: center; justify-content: center; font-size: 3rem; pointer-events: all;
-            box-shadow: 0 0 20px rgba(0,0,0,0.4);
+            box-shadow: 0 8px 0 rgba(0,0,0,0.2); user-select: none;
         }
+        .ctrl-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 rgba(0,0,0,0.2); background: rgba(255,255,255,0.3); }
 
         .hidden { display: none !important; }
     </style>
@@ -70,23 +91,35 @@
 <div id="gameContainer">
     <div id="lobbyUI" class="ui-layer pointer">
         <div class="top-nav">
-            <div class="pill" style="color: var(--gold); border-color: var(--gold);">💰 <span id="goldText">0</span></div>
-            <div class="pill" style="color: #00ff88; border-color: #00ff88;">🏆 <span id="scoreText">0</span></div>
+            <div class="pill" style="color: var(--gold); border-color: var(--gold);">💰 <span id="goldLobby">0</span></div>
+            <div class="pill" style="color: #00ff88; border-color: #00ff88;">⭐ LVL <span id="lvlLobby">1</span></div>
         </div>
         <div class="side-menu">
-            <div class="tile">🛒</div>
-            <div class="tile" style="background: linear-gradient(180deg, #ff4646 0%, #aa0000 100%); border-color: #fff; box-shadow: 0 8px 0 #660000;">👕</div>
+            <div class="tile" onclick="openShop()">🛒</div>
         </div>
         <div class="play-btn" onclick="startGame()">LOS!</div>
     </div>
 
+    <div id="shopModal" class="ui-layer hidden pointer">
+        <div class="modal">
+            <h2 style="margin:0; font-size: 2rem; color: var(--gold);">HELDEN SHOP</h2>
+            <div class="skin-grid" id="shopGrid">
+                </div>
+            <button class="pill pointer" style="margin-top:20px; cursor:pointer;" onclick="closeShop()">ZURÜCK</button>
+        </div>
+    </div>
+
     <div id="gameUI" class="ui-layer hidden">
+        <div class="top-nav" style="justify-content: space-between; padding: 0 30px;">
+            <div id="hpDisp" style="font-size: 2rem; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5));">❤️❤️❤️</div>
+            <div class="pill" style="color: var(--gold); border-color: var(--gold);">💰 <span id="goldGame">0</span></div>
+        </div>
         <div class="game-controls">
-            <div style="display: flex; gap: 25px;">
-                <div class="ctrl-btn" id="btnJump">↑</div>
-                <div class="ctrl-btn" id="btnDuck" style="border-color: #ff4646; color: #ff4646;">↓</div>
+            <div style="display: flex; gap: 20px;">
+                <div class="ctrl-btn pointer" id="btnJump" style="color: #00ff88;">↑</div>
+                <div class="ctrl-btn pointer" id="btnDuck" style="color: #ff4646;">↓</div>
             </div>
-            <div class="ctrl-btn" id="btnDash" style="border-color: #00fbff; color: #00fbff;">⚡</div>
+            <div class="ctrl-btn pointer" id="btnDash" style="color: #00fbff;">⚡</div>
         </div>
     </div>
 
@@ -97,142 +130,304 @@
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
 
-    let game = { active: false, frame: 0, speed: 7, particles: [] };
-    let player = { x: 150, y: 310, w: 65, h: 95, vy: 0, jumps: 0, duck: false, dash: 0 };
-    let env = { platforms: [], enemies: [] };
+    // --- STATE MANAGEMENT ---
+    let animId;
+    let state = {
+        gold: parseInt(localStorage.getItem("ns_gold2")) || 0,
+        ownedSkins: JSON.parse(localStorage.getItem("ns_skins2")) || ['Default'],
+        activeSkin: localStorage.getItem("ns_active2") || 'Default'
+    };
 
-    function drawHero(x, y, isLobby) {
-        ctx.save();
-        let breathe = isLobby ? Math.sin(Date.now() * 0.003) * 6 : 0;
-        let py = player.duck ? y + 40 : y - breathe;
-        let ph = player.duck ? 55 : 95;
+    const skins = [
+        { id: 'Default', icon: '👦', name: 'Brawler', price: 0, color1: '#00a2ff', color2: '#0051ff' },
+        { id: 'Fire', icon: '🔥', name: 'Blaze', price: 50, color1: '#ff5e00', color2: '#cc0000' },
+        { id: 'Ninja', icon: '⚡', name: 'Neon Ninja', price: 150, color1: '#00fbff', color2: '#0088cc' },
+        { id: 'Knight', icon: '👑', name: 'Gold Knight', price: 300, color1: '#ffea00', color2: '#b38f00' }
+    ];
 
-        // Shadow
-        ctx.fillStyle = "rgba(0,0,0,0.4)";
-        ctx.beginPath(); ctx.ellipse(x+32, 415, 30, 8, 0, 0, Math.PI*2); ctx.fill();
+    let game = { active: false, frame: 0, speed: 4.5, distance: 0, level: 1 };
+    let player = { x: 150, y: 300, w: 60, h: 90, vy: 0, jumps: 0, duck: false, dash: 0, hp: 3 };
+    let env = { platforms: [], enemies: [], coins: [], clouds: [], trees: [], particles: [] };
 
-        // Body Outline
-        ctx.strokeStyle = "#001a33"; ctx.lineWidth = 8;
-        ctx.beginPath(); ctx.roundRect(x-2, py-2, 69, ph+4, 18); ctx.stroke();
+    // --- SHOP LOGIC ---
+    function updateShopUI() {
+        document.getElementById("goldLobby").innerText = state.gold;
+        let html = '';
+        skins.forEach(s => {
+            let isOwned = state.ownedSkins.includes(s.id);
+            let isActive = state.activeSkin === s.id;
+            html += `<div class="skin-card ${isOwned ? 'owned' : ''} ${isActive ? 'active' : ''}" onclick="buyOrEquip('${s.id}', ${s.price})">
+                <div style="font-size: 3rem;">${s.icon}</div>
+                <div style="font-size: 0.9rem;">${s.name}</div>
+                ${!isOwned ? `<button class="buy-btn">${s.price} 💰</button>` : (isActive ? '<span style="color:#00ff88;font-weight:bold;">Aktiv</span>' : '<span style="color:#aaa;">Im Besitz</span>')}
+            </div>`;
+        });
+        document.getElementById("shopGrid").innerHTML = html;
+        saveData();
+    }
 
-        // Main Body (Gradient)
-        let grad = ctx.createLinearGradient(x, py, x, py+ph);
-        grad.addColorStop(0, "#00a2ff"); grad.addColorStop(1, "#0051ff");
-        ctx.fillStyle = grad;
-        ctx.beginPath(); ctx.roundRect(x, py, 65, ph, 16); ctx.fill();
+    function buyOrEquip(id, price) {
+        if (!state.ownedSkins.includes(id)) {
+            if (state.gold >= price) {
+                state.gold -= price; state.ownedSkins.push(id); state.activeSkin = id;
+            } else { alert("Nicht genug Münzen! Sammle mehr im Spiel."); return; }
+        } else { state.activeSkin = id; }
+        updateShopUI();
+    }
 
-        // Vest/Detail
-        ctx.fillStyle = "rgba(255,255,255,0.15)";
-        ctx.fillRect(x+10, py+40, 45, 20);
+    function saveData() {
+        localStorage.setItem("ns_gold2", state.gold);
+        localStorage.setItem("ns_skins2", JSON.stringify(state.ownedSkins));
+        localStorage.setItem("ns_active2", state.activeSkin);
+    }
 
-        // Face
-        ctx.fillStyle = "#ffdbac";
-        ctx.beginPath(); ctx.roundRect(x+5, py-5, 55, 50, 18); ctx.fill();
-        
-        // Eyes (High Detail)
-        ctx.fillStyle = "#fff";
-        ctx.beginPath(); ctx.arc(x+20, py+15, 9, 0, Math.PI*2); ctx.arc(x+45, py+15, 9, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = "#000";
-        ctx.beginPath(); ctx.arc(x+23, py+15, 4, 0, Math.PI*2); ctx.arc(x+42, py+15, 4, 0, Math.PI*2); ctx.fill();
+    function openShop() { document.getElementById("shopModal").classList.remove("hidden"); updateShopUI(); }
+    function closeShop() { document.getElementById("shopModal").classList.add("hidden"); }
 
-        // Shine Effect
-        ctx.fillStyle = "rgba(255,255,255,0.3)";
-        ctx.beginPath(); ctx.roundRect(x+5, py+5, 15, 5, 5); ctx.fill();
+    // --- HD GRAPHICS ENGINE (Simuliert das Bild) ---
+    function drawCloud(x, y, s) {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+        ctx.beginPath();
+        ctx.arc(x, y, 30*s, 0, Math.PI*2);
+        ctx.arc(x+35*s, y-15*s, 35*s, 0, Math.PI*2);
+        ctx.arc(x+70*s, y, 30*s, 0, Math.PI*2);
+        ctx.fill();
+    }
 
+    function drawPineTree(x, y, scale) {
+        ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
+        // Stamm
+        ctx.fillStyle = "#5c3a21"; ctx.fillRect(-5, -20, 10, 20);
+        // Blätter (3 Dreiecke)
+        ctx.fillStyle = "#0b6623"; // Dunkelgrün
+        ctx.beginPath(); ctx.moveTo(0, -70); ctx.lineTo(25, -20); ctx.lineTo(-25, -20); ctx.fill();
+        ctx.fillStyle = "#228b22"; // Hellgrün Highlight
+        ctx.beginPath(); ctx.moveTo(0, -70); ctx.lineTo(0, -20); ctx.lineTo(-25, -20); ctx.fill();
         ctx.restore();
     }
 
-    function drawPlatform(p) {
-        // 3D Side
-        ctx.fillStyle = "#1a3a6c";
-        ctx.fillRect(p.x, p.y + 15, p.w, p.h);
-        // Top Surface
-        let grad = ctx.createLinearGradient(p.x, p.y, p.x, p.y+20);
-        grad.addColorStop(0, "#4a90ff"); grad.addColorStop(1, "#2a4a7c");
-        ctx.fillStyle = grad;
-        ctx.beginPath(); ctx.roundRect(p.x, p.y, p.w, 20, 5); ctx.fill();
-        // Highlight Edge
-        ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 2;
-        ctx.strokeRect(p.x+2, p.y+2, p.w-4, 2);
+    function drawFloatingIsland(p) {
+        let r = 15; // Radius für Rundungen
+        
+        // 1. Tiefe Erdschicht (Schatten)
+        ctx.fillStyle = "#4a2e15";
+        ctx.beginPath(); ctx.roundRect(p.x, p.y + 20, p.w, p.h - 10, r); ctx.fill();
+        
+        // 2. Haupt-Erdschicht (Dirt Block)
+        ctx.fillStyle = "#7a4b24";
+        ctx.beginPath(); ctx.roundRect(p.x, p.y + 10, p.w, p.h - 20, r); ctx.fill();
+        
+        // 3. Dunkelgrüne Gras-Kante (Übergang)
+        ctx.fillStyle = "#3a8c1c";
+        ctx.beginPath(); ctx.roundRect(p.x, p.y + 5, p.w, 25, r); ctx.fill();
+        
+        // 4. Helles Top-Gras (Die Spielfläche)
+        ctx.fillStyle = "#66cc33";
+        ctx.beginPath(); ctx.roundRect(p.x, p.y, p.w, 15, [r, r, 0, 0]); ctx.fill();
+
+        // 5. Gras Highlight (Kante oben für 3D Glanz)
+        ctx.fillStyle = "#99ff66";
+        ctx.fillRect(p.x + r, p.y, p.w - (r*2), 4);
     }
 
+    function drawCoin(c) {
+        ctx.save(); ctx.translate(c.x, c.y + Math.sin(game.frame*0.1)*5);
+        ctx.fillStyle = "#e6b800"; ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#ffcc00"; ctx.beginPath(); ctx.arc(0, 0, 11, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.font = "16px Arial Black"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("$", 0, 1);
+        ctx.restore();
+    }
+
+    function drawEnemy(e) {
+        ctx.save(); ctx.translate(e.x, e.y);
+        ctx.fillStyle = "#cc0000";
+        ctx.beginPath(); ctx.roundRect(0, 0, 40, 40, 10); ctx.fill();
+        // Stacheln
+        ctx.fillStyle = "#fff";
+        ctx.beginPath(); ctx.moveTo(20, -10); ctx.lineTo(10, 0); ctx.lineTo(30, 0); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(50, 20); ctx.lineTo(40, 10); ctx.lineTo(40, 30); ctx.fill();
+        // Böses Gesicht
+        ctx.fillStyle = "#000"; ctx.fillRect(10, 10, 8, 8); ctx.fillRect(22, 10, 8, 8);
+        ctx.restore();
+    }
+
+    function drawHero(x, y, isLobby) {
+        ctx.save();
+        let sData = skins.find(s => s.id === state.activeSkin);
+        let breathe = isLobby ? Math.sin(Date.now() * 0.005) * 5 : 0;
+        let py = player.duck ? y + 40 : y - breathe;
+        let ph = player.duck ? 50 : 90;
+
+        // Drop Shadow
+        ctx.fillStyle = "rgba(0,0,0,0.3)";
+        ctx.beginPath(); ctx.ellipse(x+30, y+95, 25, 8, 0, 0, Math.PI*2); ctx.fill();
+
+        // Body Outline
+        ctx.strokeStyle = "#001122"; ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.roundRect(x, py, 60, ph, 15); ctx.stroke();
+
+        // Body Gradient
+        let grad = ctx.createLinearGradient(x, py, x, py+ph);
+        grad.addColorStop(0, sData.color1); grad.addColorStop(1, sData.color2);
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.roundRect(x, py, 60, ph, 14); ctx.fill();
+
+        // Gesicht Block
+        ctx.fillStyle = "#ffdbac";
+        ctx.beginPath(); ctx.roundRect(x+5, py-5, 50, 45, 12); ctx.fill();
+        
+        // Augen
+        ctx.fillStyle = "#fff";
+        ctx.beginPath(); ctx.arc(x+18, py+15, 8, 0, Math.PI*2); ctx.arc(x+40, py+15, 8, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#000";
+        ctx.beginPath(); ctx.arc(x+20, py+15, 3, 0, Math.PI*2); ctx.arc(x+38, py+15, 3, 0, Math.PI*2); ctx.fill();
+
+        // Dash Glow
+        if(player.dash > 0) {
+            ctx.shadowColor = sData.color1; ctx.shadowBlur = 20;
+            ctx.strokeStyle = sData.color1; ctx.lineWidth = 4;
+            ctx.strokeRect(x-5, py-5, 70, ph+10);
+        }
+        ctx.restore();
+    }
+
+    // --- GAME LOGIC ---
     function startGame() {
+        cancelAnimationFrame(animId);
         document.getElementById("lobbyUI").classList.add("hidden");
         document.getElementById("gameUI").classList.remove("hidden");
-        game.active = true; game.frame = 0;
-        env.platforms = [{x: 0, y: 410, w: 2000, h: 200}];
-        env.enemies = [];
+        document.getElementById("gameContainer").style.background = "linear-gradient(180deg, #4facfe 0%, #00f2fe 100%)";
+        
+        game.active = true; game.frame = 0; game.distance = 0; game.level = 1; game.speed = 4.5;
+        player.y = 300; player.vy = 0; player.dash = 0; player.hp = 3; player.jumps = 0;
+        
+        env.platforms = [{x: 0, y: 400, w: 2000, h: 200}];
+        env.enemies = []; env.coins = []; env.clouds = []; env.trees = []; env.particles = [];
+        
+        // Initiale Wolken
+        for(let i=0; i<5; i++) env.clouds.push({x: Math.random()*800, y: 50 + Math.random()*100, s: 0.5 + Math.random()*0.8});
+        
         loop();
     }
 
-    // --- CONTROLS ---
-    const doJump = () => { if(player.jumps < 2) { player.vy = -19; player.jumps++; } };
+    function stopGame() {
+        game.active = false; saveData(); updateShopUI();
+        document.getElementById("gameUI").classList.add("hidden");
+        document.getElementById("lobbyUI").classList.remove("hidden");
+    }
+
+    // Controls
+    const doJump = () => { if(player.jumps < 2) { player.vy = -16; player.jumps++; player.duck = false; } };
     document.getElementById("btnJump").ontouchstart = (e) => { e.preventDefault(); doJump(); };
     document.getElementById("btnDuck").ontouchstart = (e) => { e.preventDefault(); player.duck = true; };
     document.getElementById("btnDuck").ontouchend = (e) => { e.preventDefault(); player.duck = false; };
-    document.getElementById("btnDash").ontouchstart = (e) => { e.preventDefault(); if(player.dash <= 0) player.dash = 18; };
+    document.getElementById("btnDash").ontouchstart = (e) => { e.preventDefault(); if(player.dash <= 0) player.dash = 20; };
 
-    window.onkeydown = (e) => { 
-        if(e.code === "Space") doJump(); 
-        if(e.code === "ArrowDown") player.duck = true;
-    };
+    window.onkeydown = (e) => { if(e.code === "Space") doJump(); if(e.code === "ArrowDown") player.duck = true; };
     window.onkeyup = (e) => { if(e.code === "ArrowDown") player.duck = false; };
 
     function loop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         if(!game.active) {
-            drawHero(400, 230, true);
-            requestAnimationFrame(loop);
+            drawHero(400, 240, true);
+            animId = requestAnimationFrame(loop);
             return;
         }
 
         game.frame++;
-        let speed = player.dash > 0 ? 20 : game.speed;
-        
-        // Physics
-        if(player.dash > 0) { player.dash--; player.vy = 0; }
-        else { player.vy += 0.95; player.y += player.vy; }
+        game.distance += game.speed;
 
-        if(player.y > 315) { 
-            player.y = 315; player.vy = 0; player.jumps = 0; 
-            if(game.frame % 5 === 0) game.particles.push({x: player.x, y: 410, r: 5, a: 1}); // Dust
+        // Level Up System
+        if(game.distance > game.level * 3000) {
+            game.level++;
+            game.speed += 0.5;
+            document.getElementById("lvlLobby").innerText = game.level;
+            // Farbwechsel Sonnenuntergang
+            if(game.level === 2) document.getElementById("gameContainer").style.background = "linear-gradient(180deg, #fa709a 0%, #fee140 100%)";
+            if(game.level === 3) document.getElementById("gameContainer").style.background = "linear-gradient(180deg, #141e30 0%, #243b55 100%)";
         }
 
-        // Platforms
-        env.platforms.forEach(p => {
-            p.x -= speed;
-            drawPlatform(p);
-        });
+        let curSpeed = player.dash > 0 ? 18 : game.speed;
+        
+        // Player Physics
+        if(player.dash > 0) { player.dash--; player.vy = 0; }
+        else { player.vy += 0.8; player.y += player.vy; }
 
-        // Enemies (Brawl Style Spikes)
-        if(game.frame % 80 === 0) env.enemies.push({x: 900, y: 370});
-        env.enemies.forEach((en, i) => {
-            en.x -= speed;
-            ctx.fillStyle = "#ff4646";
-            ctx.beginPath(); ctx.moveTo(en.x, en.y+40); ctx.lineTo(en.x+20, en.y); ctx.lineTo(en.x+40, en.y+40); ctx.fill();
-            ctx.strokeStyle = "#fff"; ctx.stroke();
-            if(Math.abs(player.x - en.x) < 45 && Math.abs(player.y - en.y) < 45) {
-                if(player.dash > 0) env.enemies.splice(i, 1);
-                else { game.active = false; location.reload(); }
+        let onGround = false;
+
+        // Parallax Wolken (Langsam)
+        if(game.frame % 150 === 0) env.clouds.push({x: 900, y: 50 + Math.random()*150, s: 0.5 + Math.random()*0.8});
+        env.clouds.forEach(c => { c.x -= curSpeed * 0.2; drawCloud(c.x, c.y, c.s); });
+
+        // Tannenbäume (Mittel)
+        env.trees.forEach(t => { t.x -= curSpeed * 0.8; drawPineTree(t.x, t.y, 1); });
+
+        // Map Generierung & Plattformen (Schnell)
+        if(game.frame % 120 === 0) {
+            let gap = Math.random() > 0.5;
+            let py = gap ? 250 : 400;
+            env.platforms.push({x: 900, y: py, w: 300 + Math.random()*200, h: 200});
+            // Spawn Baum auf Plattform
+            if(Math.random() > 0.5) env.trees.push({x: 950 + Math.random()*100, y: py});
+            // Spawn Coins
+            if(Math.random() > 0.3) env.coins.push({x: 1000, y: py - 60});
+            // Spawn Enemy
+            if(Math.random() > 0.4 && game.frame > 300) env.enemies.push({x: 1100, y: py - 40});
+        }
+
+        env.platforms.forEach(p => {
+            p.x -= curSpeed;
+            drawFloatingIsland(p);
+            // Kollision
+            if(player.x < p.x + p.w && player.x + 50 > p.x && player.y + 90 > p.y && player.y + 70 < p.y) {
+                player.y = p.y - 90; player.vy = 0; player.jumps = 0; onGround = true;
             }
         });
 
-        // VFX Particles
-        game.particles.forEach((p, i) => {
-            p.x -= speed; p.a -= 0.05;
-            ctx.fillStyle = `rgba(255,255,255,${p.a})`;
-            ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
-            if(p.a <= 0) game.particles.splice(i, 1);
+        // Coins (Langsamer Geld verdienen)
+        env.coins.forEach((c, i) => {
+            c.x -= curSpeed; drawCoin(c);
+            if(Math.abs((player.x+30) - c.x) < 40 && Math.abs((player.y+45) - c.y) < 50) {
+                state.gold++; env.coins.splice(i, 1);
+                document.getElementById("goldGame").innerText = state.gold;
+            }
         });
 
+        // Enemies
+        env.enemies.forEach((en, i) => {
+            en.x -= curSpeed + 1; drawEnemy(en);
+            if(Math.abs((player.x+30) - (en.x+20)) < 45 && Math.abs((player.y+45) - (en.y+20)) < 45) {
+                if(player.dash > 0) { env.enemies.splice(i, 1); env.particles.push({x: en.x, y: en.y, life: 20}); }
+                else { player.hp--; env.enemies.splice(i, 1); if(player.hp <= 0) stopGame(); }
+            }
+        });
+
+        // Particles (Explosionen)
+        env.particles.forEach((p, i) => {
+            p.life--;
+            ctx.fillStyle = `rgba(255, 60, 60, ${p.life/20})`;
+            ctx.beginPath(); ctx.arc(p.x+20, p.y+20, (20-p.life)*3, 0, Math.PI*2); ctx.fill();
+            if(p.life <= 0) env.particles.splice(i, 1);
+        });
+
+        // GARBAGE COLLECTION (Anti-Lag Fix)
+        env.platforms = env.platforms.filter(p => p.x + p.w > -100);
+        env.clouds = env.clouds.filter(c => c.x > -200);
+        env.trees = env.trees.filter(t => t.x > -100);
+        env.enemies = env.enemies.filter(e => e.x > -100);
+        env.coins = env.coins.filter(c => c.x > -100);
+
+        // Tod durch Fall
+        if(player.y > canvas.height + 100) stopGame();
+
         drawHero(player.x, player.y, false);
-        document.getElementById("goldText").innerText = Math.floor(game.frame/5);
-        document.getElementById("scoreText").innerText = Math.floor(game.frame/20);
+        document.getElementById("hpDisp").innerText = "❤️".repeat(player.hp);
         
-        requestAnimationFrame(loop);
+        animId = requestAnimationFrame(loop);
     }
-    loop();
+
+    updateShopUI();
 </script>
 </body>
 </html>
