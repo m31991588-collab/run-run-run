@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Face Runner - Victory Edition</title>
+    <style>
+        :root { --gold: #fbbf24; --blue: #3b82f6; --dark: #020617; }
+        body { margin: 0; background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; touch-action: none; }
+        #gameContainer { position: relative; border: 2px solid #1e293b; background: #000; }
+        canvas { display: block; max-width: 100vw; max-height: 80vh; }
+        
+        .hud { position: absolute; top: 10px; width: 100%; padding: 0 20px; display: flex; justify-content: space-between; pointer-events: none; z-index: 10; font-weight: bold; }
+        
+        .overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 20px; }
+        .victory-text { color: var(--gold); font-size: 3rem; text-shadow: 0 0 20px var(--gold); margin: 0; }
+        
+        .btn { padding: 15px 40px; font-size: 1.2rem; background: var(--blue); color: white; border: none; border-radius: 12px; cursor: pointer; margin-top: 20px; transition: 0.2s; }
+        .btn:hover { transform: scale(1.1); background: #2563eb; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="gameContainer">
+        <div class="hud">
+            <div id="stats">💰 0 | ⭐ LVL 1</div>
+            <div id="hp" style="color: #ef4444;">❤️ x 3</div>
+        </div>
+
+        <canvas id="canvas" width="800" height="400"></canvas>
+
+        <div id="menu" class="overlay">
+            <h1 id="menuTitle">FACE RUNNER</h1>
+            <p id="menuSub">Erreiche Level 10 für den ultimativen Erfolg!</p>
+            <button class="btn" onclick="start()">STARTEN</button>
+        </div>
+
+        <div id="victoryScreen" class="overlay hidden">
+            <h1 class="victory-text">POKAL GEWONNEN! 🏆</h1>
+            <p>Du hast den Olymp in Level 10 erreicht. Du bist ein Champion!</p>
+            <div style="font-size: 4rem; margin: 20px;">🎖️</div>
+            <button class="btn" style="background: var(--gold); color: black;" onclick="continueEndless()">ENDLOS-MODUS</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // --- PERSISTENT DATA ---
+        let storage = {
+            gold: parseInt(localStorage.getItem("v_gold")) || 0,
+            lvl: parseInt(localStorage.getItem("v_lvl")) || 1,
+            xp: parseInt(localStorage.getItem("v_xp")) || 0
+        };
+
+        let game = { active: false, frame: 0, endlessUnlocked: false };
+        let player = { x: 80, y: 300, w: 45, h: 45, vy: 0, jumps: 0, hp: 3 };
+        let enemies = [], particles = [];
+
+        function save() {
+            localStorage.setItem("v_gold", storage.gold);
+            localStorage.setItem("v_lvl", storage.lvl);
+            localStorage.setItem("v_xp", storage.xp);
+        }
+
+        function start() {
+            document.getElementById("menu").classList.add("hidden");
+            document.getElementById("victoryScreen").classList.add("hidden");
+            game.active = true;
+            player.hp = 3;
+            enemies = []; particles = [];
+            loop();
+        }
+
+        function continueEndless() {
+            game.endlessUnlocked = true;
+            start();
+        }
+
+        function spawnExplosion(x, y, color) {
+            for(let i=0; i<15; i++) {
+                particles.push({
+                    x, y, 
+                    vx: (Math.random()-0.5)*15, 
+                    vy: (Math.random()-0.5)*15, 
+                    life: 1, color
+                });
+            }
+        }
+
+        function loop() {
+            if (!game.active) return;
+            game.frame++;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Sieg-Check (Nur wenn noch nicht im Endless-Mode)
+            if (storage.lvl >= 10 && !game.endlessUnlocked) {
+                game.active = false;
+                document.getElementById("victoryScreen").classList.remove("hidden");
+                spawnExplosion(400, 200, "#fbbf24");
+            }
+
+            // Boden & Physik
+            ctx.fillStyle = storage.lvl >= 10 ? "#451a03" : "#1e293b";
+            ctx.fillRect(0, 350, 800, 50);
+            player.vy += 0.8; player.y += player.vy;
+            if (player.y > 305) { player.y = 305; player.vy = 0; player.jumps = 0; }
+
+            // Spieler & Glow-Effekt
+            ctx.shadowBlur = storage.lvl >= 10 ? 20 : 0;
+            ctx.shadowColor = "#fbbf24";
+            ctx.fillStyle = "#3b82f6"; ctx.fillRect(player.x, player.y, player.w, player.h);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = "white"; ctx.font = "30px Arial";
+            ctx.fillText(storage.lvl >= 10 ? "👑" : "😎", player.x + 5, player.y + 34);
+
+            // Gegner & XP
+            if (game.frame % Math.max(30, 100 - storage.lvl * 5) === 0) enemies.push({ x: 850, y: 310 });
+            enemies.forEach((en, i) => {
+                en.x -= (7 + storage.lvl * 0.4);
+                ctx.fillStyle = "#ef4444"; ctx.fillRect(en.x, en.y, 40, 40);
+
+                if (player.x < en.x+40 && player.x+45 > en.x && player.y+45 > en.y) {
+                    if (player.vy > 0 && player.y < en.y) {
+                        enemies.splice(i, 1); player.vy = -12; 
+                        storage.xp += 100; storage.gold += 10;
+                        spawnExplosion(en.x+20, en.y+20, "#ef4444");
+                    } else {
+                        player.hp--; enemies.splice(i, 1);
+                        if (player.hp <= 0) { game.active = false; document.getElementById("menu").classList.remove("hidden"); }
+                    }
+                }
+                if (en.x < -50) { enemies.splice(i, 1); storage.xp += 20; }
+            });
+
+            // Partikel Update
+            particles.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+                ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, 4, 4);
+                if (p.life <= 0) particles.splice(i, 1);
+            });
+            ctx.globalAlpha = 1;
+
+            // Level-Up Logik
+            if (storage.xp >= storage.lvl * 1000) {
+                storage.lvl++; storage.xp = 0; save();
+                spawnExplosion(player.x, player.y, "#10b981");
+            }
+
+            document.getElementById("stats").innerText = `💰 ${storage.gold} | ⭐ LVL ${storage.lvl}`;
+            document.getElementById("hp").innerText = "❤️ x " + player.hp;
+            requestAnimationFrame(loop);
+        }
+
+        window.addEventListener("keydown", (e) => { if(e.code === "Space") { if(game.active && player.jumps < 2) { player.vy = -15; player.jumps++; } e.preventDefault(); } });
+        canvas.addEventListener("touchstart", (e) => { if(game.active && player.jumps < 2) { player.vy = -15; player.jumps++; } e.preventDefault(); }, {passive: false});
+
+    </script>
+</body>
+</html>
