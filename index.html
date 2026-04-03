@@ -2,324 +2,112 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Nebula Stars: Physics Edition</title>
+    <title>Mein Jump 'n' Run</title>
     <style>
-        :root { 
-            --gold: #ffdf00; --ice: #a5f3fc; --danger: #ff4d4d;
-            --ui-blue: #0f172a; --font: 'Arial Black', sans-serif;
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #222;
         }
-        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; background: #020617; color: white; font-family: var(--font); overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-
-        #gameContainer { 
-            position: relative; width: 900px; height: 500px; 
-            background: #000; border: 8px solid #334155; border-radius: 40px; overflow: hidden;
-            box-shadow: 0 0 60px rgba(0,0,0,0.9);
+        canvas {
+            background-color: #FFB347; 
+            border: 2px solid white;
         }
-        canvas { display: block; width: 100%; height: 100%; }
-
-        /* UI LAYER */
-        .ui-layer { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
-        .pointer { pointer-events: all; }
-        .hidden { display: none !important; }
-
-        .top-bar { display: flex; justify-content: space-between; padding: 20px; width: 100%; }
-        .stat-pill { background: rgba(15, 23, 42, 0.9); padding: 10px 20px; border-radius: 20px; border: 2px solid #fff; display: flex; align-items: center; gap: 10px; font-size: 1.2rem; }
-
-        .progress-bar { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 250px; height: 15px; background: #000; border: 2px solid #fff; border-radius: 10px; overflow: hidden; }
-        #progress-fill { width: 0%; height: 100%; background: #22c55e; transition: width 0.2s; }
-
-        .controls { position: absolute; bottom: 30px; width: 100%; display: flex; justify-content: space-between; padding: 0 40px; }
-        .btn-round { width: 85px; height: 85px; background: rgba(255,255,255,0.15); border: 4px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; color: #fff; backdrop-filter: blur(8px); }
-        .btn-round:active { transform: scale(0.9); background: rgba(255,255,255,0.4); }
-
-        /* LOBBY MAP */
-        .map-lobby { position: absolute; inset: 0; background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .level-path { display: flex; gap: 30px; z-index: 2; padding: 20px; }
-        .level-node { 
-            width: 110px; height: 110px; background: #334155; border: 5px solid #fff; border-radius: 25px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            cursor: pointer; box-shadow: 0 10px 0 #000; transition: 0.2s; 
-        }
-        .level-node.locked { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
-        .level-node:not(.locked):hover { transform: translateY(-8px); background: #3b82f6; }
-
-        .screen-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .btn-main { padding: 15px 50px; background: var(--gold); border: none; border-radius: 20px; font-size: 2rem; font-family: var(--font); cursor: pointer; box-shadow: 0 8px 0 #92400e; }
     </style>
 </head>
 <body>
 
-<div id="gameContainer">
-    <div id="ui-lobby" class="ui-layer pointer">
-        <div class="map-lobby">
-            <div class="top-bar" style="position:absolute; top:0;">
-                <div class="stat-pill" style="color:var(--gold)">💰 <span id="lobby-gold">0</span></div>
-            </div>
-            <h1 style="text-shadow: 4px 4px 0 #3b82f6; font-size: 3rem;">NEBULA ADVENTURE</h1>
-            <div class="level-path">
-                <div class="level-node" onclick="Game.start(1)"><span>1</span><small>Forest</small></div>
-                <div id="node-2" class="level-node locked" onclick="Game.start(2)"><span>2</span><small>Lava</small></div>
-                <div id="node-3" class="level-node locked" onclick="Game.start(3)"><span>3</span><small>Winter</small></div>
-                <div id="node-4" class="level-node locked" onclick="Game.start(4)"><span>4</span><small>Sky</small></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="ui-game" class="ui-layer hidden">
-        <div class="top-bar">
-            <div id="hp-bar" style="font-size: 2rem;">❤️❤️❤️</div>
-            <div class="stat-pill">💰 <span id="game-gold">0</span></div>
-        </div>
-        <div class="progress-bar"><div id="progress-fill"></div></div>
-        <div class="controls pointer">
-            <div style="display: flex; gap: 20px;">
-                <div class="btn-round" id="ctrl-jump">↑</div>
-                <div class="btn-round" id="ctrl-duck">↓</div>
-            </div>
-            <div class="btn-round" id="ctrl-dash" style="color:#00fbff; border-color:#00fbff;">⚡</div>
-        </div>
-    </div>
-
-    <div id="ui-result" class="screen-overlay hidden pointer">
-        <h1 id="res-title" style="font-size: 4rem;"></h1>
-        <p id="res-body" style="font-size: 1.5rem; margin-bottom: 30px;"></p>
-        <button class="btn-main" onclick="Game.backToLobby()">WEITER</button>
-    </div>
-
-    <canvas id="canvas" width="900" height="500"></canvas>
-</div>
+<canvas id="gameCanvas" width="1024" height="576"></canvas>
 
 <script>
-/**
- * NEBULA STARS: ADVENTURE ENGINE V6
- * Features: Static Levels, Realistic Trampolines, Fans, Ice Physics, Optimized Collision.
- */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
 
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+    // --- BILDER LADEN ---
+    // Hier sagen wir dem Spiel, dass es dein Bild laden soll
+    const bgImage = new Image();
+    bgImage.src = 'hintergrund.jpg'; // ACHTUNG: Der Name muss exakt mit deiner Bilddatei übereinstimmen!
 
-const SaveData = {
-    gold: parseInt(localStorage.getItem('ns_v6_gold')) || 0,
-    lvl: parseInt(localStorage.getItem('ns_v6_lvl')) || 1,
-    save() {
-        localStorage.setItem('ns_v6_gold', this.gold);
-        localStorage.setItem('ns_v6_lvl', this.lvl);
-    }
-};
+    let score = 187650;
+    let coins = 245;
+    let lives = 3;
 
-const LEVELS = {
-    1: { bg: ["#0ea5e9", "#38bdf8"], len: 3200, data: [
-        {t:'p', x:0, y:400, w:800}, {t:'c', x:400, y:340},
-        {t:'tramp', x:950, y:380}, // Trampolin (Reichweite berechnet)
-        {t:'p', x:1000, y:150, w:400},
-        {t:'p', x:1600, y:400, w:1000},
-        {t:'ceil', x:1800, y:230, w:300}
-    ]},
-    2: { bg: ["#f97316", "#ef4444"], len: 4000, data: [
-        {t:'p', x:0, y:400, w:600},
-        {t:'lava', x:600, y:460, w:400},
-        {t:'p', x:1000, y:350, w:500},
-        {t:'tramp', x:1600, y:330},
-        {t:'p', x:1700, y:100, w:500},
-        {t:'p', x:2400, y:400, w:800}
-    ]},
-    3: { bg: ["#1e293b", "#334155"], len: 4000, snow:true, data: [
-        {t:'p', x:0, y:400, w:700, ice:true},
-        {t:'p', x:1000, y:320, w:500, ice:true},
-        {t:'ceil', x:1100, y:180, w:300},
-        {t:'p', x:1700, y:400, w:1000, ice:true}
-    ]},
-    4: { bg: ["#0f172a", "#1e293b"], len: 5000, data: [
-        {t:'p', x:0, y:400, w:500},
-        {t:'fan', x:600, y:450, w:120, h:400}, // Ventilator
-        {t:'p', x:550, y:100, w:400},
-        {t:'tramp', x:1200, y:380},
-        {t:'p', x:1300, y:100, w:400},
-        {t:'fan', x:2000, y:450, w:120, h:500},
-        {t:'p', x:1950, y:0, w:500}
-    ]}
-};
+    // Unsere Spielfigur (Aktuell noch ein blaues Quadrat)
+    let player = {
+        x: 400,
+        y: 100,
+        width: 40,
+        height: 60,
+        color: '#0088FF',
+        velocityY: 0,
+        gravity: 0.5,
+        isGrounded: false
+    };
 
-const Game = {
-    active: false, cur: 1, camX: 0, gold: 0, speed: 5, particles: [],
-    
-    start(id) {
-        if(id > SaveData.lvl) return;
-        this.cur = id; this.camX = 0; this.gold = 0; this.active = true; this.particles = [];
-        Player.reset();
-        document.getElementById('ui-lobby').classList.add('hidden');
-        document.getElementById('ui-game').classList.remove('hidden');
-        this.loop();
-    },
+    // Ein unsichtbarer Boden, platziert auf Höhe der Ranken im Bild
+    let platform = {
+        x: 0,            // Startet ganz links
+        y: 480,          // Die Höhe im Bild, wo ungefähr der Boden ist
+        width: 1024,     // Geht über die ganze Breite
+        height: 100,
+        color: 'rgba(0, 255, 0, 0.3)' // Halbtransparentes Grün, damit wir sehen, wo unsere unsichtbare Wand ist!
+    };
 
-    loop() {
-        if(!this.active) return;
-        ctx.clearRect(0,0,900,500);
-        const map = LEVELS[this.cur];
-        this.camX += this.speed;
+    function update() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        this.drawBG(map.bg);
-        if(map.snow) this.drawSnow();
+        // 1. ZUERST DAS BILD ZEICHNEN (Der Hintergrund)
+        // Wir zeichnen das Bild über die gesamte Spielfläche
+        ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
 
-        map.data.forEach(o => {
-            let sx = o.x - this.camX;
-            if(sx > -1000 && sx < 1000) {
-                this.drawObj(o, sx);
-                this.collide(o, sx);
-            }
-        });
+        // 2. PHYSIK BERECHNEN
+        player.velocityY += player.gravity;
+        player.y += player.velocityY;
 
-        this.drawParticles();
-        Player.update();
-        Player.draw();
+        if (player.y + player.height >= platform.y && 
+            player.x + player.width >= platform.x && 
+            player.x <= platform.x + platform.width) {
+            
+            player.y = platform.y - player.height;
+            player.velocityY = 0;
+            player.isGrounded = true;
+        }
 
-        document.getElementById('progress-fill').style.width = (this.camX / map.len * 100) + "%";
-        document.getElementById('game-gold').innerText = this.gold;
+        // 3. LOGIK ZEICHNEN (Diese zeichnen wir ÜBER das Bild)
+        
+        // Den halbtransparenten Boden zeichnen (später machen wir den komplett unsichtbar)
+        ctx.fillStyle = platform.color;
+        ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
 
-        if(this.camX > map.len) this.finish(true);
-        requestAnimationFrame(() => this.loop());
-    },
+        // Den Spieler zeichnen
+        ctx.fillStyle = player.color;
+        ctx.fillRect(player.x, player.y, player.width, player.height);
 
-    drawBG(c) {
-        let g = ctx.createLinearGradient(0,0,0,500);
-        g.addColorStop(0, c[0]); g.addColorStop(1, c[1]);
-        ctx.fillStyle = g; ctx.fillRect(0,0,900,500);
-    },
-
-    drawSnow() {
+        // Das HUD zeichnen (Weiße Schrift mit schwarzem Rand, damit man es auf dem Bild besser lesen kann)
         ctx.fillStyle = "white";
-        for(let i=0; i<15; i++) {
-            let x = (Math.sin(Date.now()*0.001 + i)*1000 + 1000)%900;
-            let y = (i * 40 + Date.now()*0.1)%500;
-            ctx.beginPath(); ctx.arc(x,y, 3, 0, Math.PI*2); ctx.fill();
-        }
-    },
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 3;
+        ctx.font = "bold 24px Arial";
+        
+        // Text umranden und dann füllen
+        ctx.strokeText("Leben: " + lives, 20, 40);
+        ctx.fillText("Leben: " + lives, 20, 40);
+        
+        ctx.strokeText("SCORE: " + score, canvas.width - 250, 40);
+        ctx.fillText("SCORE: " + score, canvas.width - 250, 40);
 
-    drawObj(o, x) {
-        ctx.save();
-        if(o.t === 'p') {
-            ctx.fillStyle = o.ice ? "#bae6fd" : "#334155";
-            ctx.beginPath(); ctx.roundRect(x, o.y, o.w, 200, 15); ctx.fill();
-            ctx.fillStyle = o.ice ? "#fff" : "#4ade80"; ctx.fillRect(x, o.y, o.w, 8);
-        } else if(o.t === 'tramp') {
-            // Realistisches Trampolin
-            ctx.fillStyle = "#444"; ctx.fillRect(x, o.y+15, 70, 10);
-            ctx.fillStyle = "#ef4444"; ctx.beginPath(); ctx.roundRect(x+5, o.y+5, 60, 10, 5); ctx.fill();
-        } else if(o.t === 'fan') {
-            ctx.fillStyle = "#475569"; ctx.fillRect(x, o.y-10, o.w, 20);
-            // Wind-Effekt
-            if(Math.random() > 0.7) this.particles.push({x: x + Math.random()*o.w, y: o.y, vy: -5, l: 30});
-        } else if(o.t === 'lava') {
-            ctx.fillStyle = "#ff4d4d"; ctx.fillRect(x, o.y, o.w, 100);
-            ctx.fillStyle = "#ffdf00"; ctx.fillRect(x, o.y, o.w, 5);
-        } else if(o.t === 'ceil') {
-            ctx.fillStyle = "#1e293b"; ctx.fillRect(x, o.y, o.w, 40);
-        } else if(o.t === 'c') {
-            ctx.fillStyle = "#ffdf00"; ctx.beginPath(); ctx.arc(x+20, o.y+20, 15, 0, Math.PI*2); ctx.fill();
-        }
-        ctx.restore();
-    },
-
-    drawParticles() {
-        ctx.fillStyle = "rgba(255,255,255,0.4)";
-        for(let i=this.particles.length-1; i>=0; i--) {
-            let p = this.particles[i]; p.y += p.vy; p.l--;
-            ctx.fillRect(p.x, p.y, 2, 10);
-            if(p.l <= 0) this.particles.splice(i,1);
-        }
-    },
-
-    collide(o, x) {
-        let px = Player.x, py = Player.y, pw = 50, ph = Player.duck ? 45 : 85;
-        let pBottom = Player.y + 85;
-        let realY = Player.duck ? py + 40 : py;
-
-        if(o.t === 'p') {
-            if(px+pw > x && px < x+o.w && pBottom > o.y && pBottom-Player.vy <= o.y+15) {
-                Player.y = o.y - 85; Player.vy = 0; Player.jumps = 0;
-                Player.vx = o.ice ? 2 : 0;
-            }
-        } else if(o.t === 'tramp') {
-            if(px+pw > x && px < x+70 && pBottom > o.y && pBottom-Player.vy <= o.y+20) {
-                Player.vy = -22; Player.jumps = 1;
-            }
-        } else if(o.t === 'fan') {
-            if(px+pw > x && px < x+o.w && py < o.y && py > o.y - o.h) {
-                Player.vy -= 1.3;
-            }
-        } else if(o.t === 'lava' && px+pw > x && px < x+o.w && pBottom > o.y+10) {
-            this.finish(false);
-        } else if(o.t === 'ceil' && px+pw > x && px < x+o.w && realY < o.y+40 && realY+ph > o.y) {
-            if(!Player.duck) this.finish(false);
-        } else if(o.t === 'c' && Math.abs(px-x) < 40 && Math.abs(py-o.y) < 40) {
-            this.gold++; o.t = 'used';
-        }
-    },
-
-    finish(win) {
-        this.active = false;
-        const res = document.getElementById('ui-result');
-        res.classList.remove('hidden');
-        if(win) {
-            document.getElementById('res-title').innerText = "SIEG!";
-            document.getElementById('res-title').style.color = "#22c55e";
-            SaveData.gold += this.gold;
-            if(this.cur === SaveData.lvl) SaveData.lvl++;
-            document.getElementById('res-body').innerText = `Gold verdient: +${this.gold}`;
-        } else {
-            document.getElementById('res-title').innerText = "KO!";
-            document.getElementById('res-title').style.color = "#ef4444";
-            let p = Math.floor(this.gold * 0.5);
-            SaveData.gold += p;
-            document.getElementById('res-body').innerText = `Abgestürzt. Trostpreis: +${p} Gold.`;
-        }
-        SaveData.save();
-    },
-
-    backToLobby() {
-        document.getElementById('ui-result').classList.add('hidden');
-        document.getElementById('ui-game').classList.add('hidden');
-        document.getElementById('ui-lobby').classList.remove('hidden');
-        this.updateLobby();
-    },
-
-    updateLobby() {
-        document.getElementById('lobby-gold').innerText = SaveData.gold;
-        for(let i=2; i<=4; i++) {
-            if(SaveData.lvl >= i) document.getElementById('node-'+i).classList.remove('locked');
-        }
+        requestAnimationFrame(update);
     }
-};
 
-const Player = {
-    x: 150, y: 200, vy: 0, vx: 0, jumps: 0, duck: false,
-    reset() { this.y = 200; this.vy = 0; this.vx = 0; this.jumps = 0; this.duck = false; },
-    update() {
-        this.vy += 0.8; 
-        if(this.vy > 16) this.vy = 16; // Terminal Velocity
-        this.y += this.vy;
-        this.x += this.vx;
-        if(this.vx > 0) this.vx *= 0.96;
-        if(this.y > 600) Game.finish(false);
-    },
-    draw() {
-        let dy = this.duck ? this.y + 40 : this.y;
-        let dh = this.duck ? 45 : 85;
-        ctx.fillStyle = "#3b82f6"; ctx.beginPath(); ctx.roundRect(this.x, dy, 50, dh, 12); ctx.fill();
-        ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(this.x+15, dy+15, 5, 0, Math.PI*2); ctx.arc(this.x+35, dy+15, 5, 0, Math.PI*2); ctx.fill();
-    }
-};
+    // Wir starten das Spiel erst, wenn das Bild auch wirklich fertig geladen ist
+    bgImage.onload = function() {
+        update();
+    };
 
-// INPUTS
-const jump = () => { if(Player.jumps < 2) { Player.vy = -16; Player.jumps++; } };
-document.getElementById('ctrl-jump').ontouchstart = (e) => { e.preventDefault(); jump(); };
-document.getElementById('ctrl-duck').ontouchstart = (e) => { e.preventDefault(); Player.duck = true; };
-document.getElementById('ctrl-duck').ontouchend = (e) => { e.preventDefault(); Player.duck = false; };
-document.getElementById('ctrl-dash').ontouchstart = (e) => { e.preventDefault(); Game.speed = 12; setTimeout(()=>Game.speed=5, 300); };
-
-Game.updateLobby();
 </script>
+
 </body>
 </html>
